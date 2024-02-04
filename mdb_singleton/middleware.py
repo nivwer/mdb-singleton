@@ -1,5 +1,5 @@
 import atexit
-from mongodb_singleton.singleton import MongoDBSingleton, MongoDBSingletonAsync
+from mdb_singleton.singleton import MongoDBSingleton, MongoDBSingletonAsync
 
 
 class MongoDBMiddleware:
