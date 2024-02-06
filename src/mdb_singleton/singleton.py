@@ -6,8 +6,11 @@ import asyncio
 from pymongo import errors, MongoClient
 from motor.motor_asyncio import AsyncIOMotorClient
 
+import mdb_singleton.settings as settings
+
 # Load environment variables from .env file
 load_dotenv()
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(message)s")
@@ -23,14 +26,15 @@ class MongoDBConnection:
         """
         Internal method to initialize MongoDB connection based on the specified client type.
         """
-        MONGO_URI = os.getenv("MONGO_URI")
+        MONGO_URI: str = os.getenv("MONGO_URI")
 
         try:
             client_class = MongoClient if self.type == "thread" else AsyncIOMotorClient
             self.client = client_class(MONGO_URI)
 
-            msg = f"MongoDB connection established with key: {self.key} ({self.type})"
-            logging.info(msg=msg)
+            if settings.LOGGING_ENABLED:
+                msg = f"MongoDB connection established with key: {self.key} ({self.type})"
+                logging.info(msg=msg)
 
         except errors.ServerSelectionTimeoutError as e:
             msg = "MongoDB server selection timeout error: %s"
@@ -55,8 +59,9 @@ class MongoDBConnection:
         if self.client:
             self.client.close()
 
-            msg = f"MongoDB connection closed for key: {self.key} ({self.type})"
-            logging.info(msg=msg)
+            if settings.LOGGING_ENABLED:
+                msg = f"MongoDB connection closed for key: {self.key} ({self.type})"
+                logging.info(msg=msg)
 
 
 class MongoDBSingleton(MongoDBConnection):
@@ -86,7 +91,7 @@ class MongoDBSingleton(MongoDBConnection):
         return cls._instances[key]
 
     @classmethod
-    def close_all_connections(cls):
+    def close_all(cls):
         """
         Close all MongoDB connections created by the singleton pattern.
         """
@@ -97,7 +102,7 @@ class MongoDBSingleton(MongoDBConnection):
             cls._instances.pop(key)
 
     @classmethod
-    def close(cls, key):
+    def close(cls, key: str):
         """
         Close the MongoDB connection associated with the given key.
         """

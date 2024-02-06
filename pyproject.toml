@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "mdb-singleton"
+version = "0.1.0"
+description = "MongoDB connection management with thread-safe and asyncio-compatible singletons."
+authors = ["nivwer"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+asyncio = "^3.4.3"
+python-dotenv = "^1.0.1"
+pymongo = "^4.6.1"
+motor = "^3.3.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
