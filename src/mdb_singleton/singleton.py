@@ -52,7 +52,7 @@ class MongoDBConnection:
             msg = "MongoDB configuration error: %s"
             logging.error(msg=msg, exc_info=e)
 
-    def close_connection(self):
+    def _close_connection(self):
         """
         Close the MongoDB connection if it exists.
         """
@@ -70,7 +70,7 @@ class MongoDBSingleton(MongoDBConnection):
     It ensures a single MongoDB connection per thread.
     """
 
-    _instances = {}
+    _connections = {}
     _lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs):
@@ -79,38 +79,38 @@ class MongoDBSingleton(MongoDBConnection):
         """
         key = str(id(threading.current_thread()))
 
-        if key not in cls._instances:
+        if key not in cls._connections:
             with cls._lock:
-                cls._instances[key] = MongoDBConnection().__new__(cls)
+                cls._connections[key] = MongoDBConnection().__new__(cls)
 
-                cls._instances[key].key = key
-                cls._instances[key].type = "thread"
+                cls._connections[key].key = key
+                cls._connections[key].type = "thread"
 
-                cls._instances[key]._initialize_connection()
+                cls._connections[key]._initialize_connection()
 
-        return cls._instances[key]
+        return cls._connections[key]
 
     @classmethod
-    def close_all(cls):
+    def close_all_connections(cls):
         """
         Close all MongoDB connections created by the singleton pattern.
         """
-        keys = list(cls._instances.keys())
+        keys = list(cls._connections.keys())
 
         for key in keys:
-            cls._instances[key].close_connection()
-            cls._instances.pop(key)
+            cls._connections[key]._close_connection()
+            cls._connections.pop(key)
 
     @classmethod
-    def close(cls, key: str):
+    def close_connection(cls, key: str):
         """
         Close the MongoDB connection associated with the given key.
         """
-        keys = list(cls._instances.keys())
+        keys = list(cls._connections.keys())
 
         if key in keys:
-            cls._instances[key].close_connection()
-            cls._instances.pop(key)
+            cls._connections[key]._close_connection()
+            cls._connections.pop(key)
 
 
 class MongoDBSingletonAsync(MongoDBSingleton):
@@ -125,13 +125,13 @@ class MongoDBSingletonAsync(MongoDBSingleton):
         """
         key = str(id(asyncio.current_task()))
 
-        if key not in cls._instances:
+        if key not in cls._connections:
             with cls._lock:
-                cls._instances[key] = MongoDBConnection().__new__(cls)
+                cls._connections[key] = MongoDBConnection().__new__(cls)
 
-                cls._instances[key].key = key
-                cls._instances[key].type = "task"
+                cls._connections[key].key = key
+                cls._connections[key].type = "task"
 
-                cls._instances[key]._initialize_connection()
+                cls._connections[key]._initialize_connection()
 
-        return cls._instances[key]
+        return cls._connections[key]

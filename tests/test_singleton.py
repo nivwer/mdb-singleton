@@ -11,67 +11,66 @@ class TestMongoDBSingleton(unittest.TestCase):
 
     def tearDown(self):
         """
-        Close connections and clean storage of MongoDBSingleton instances.
+        Close connections of MongoDBSingleton.
         """
-        # Close connections for each instance and clean storage of MongoDBSingleton instances.
-        for instance in MongoDBSingleton._instances.values():
-            if instance.client:
-                instance.client.close()
+        for connection in MongoDBSingleton._connections.values():
+            if connection.client:
+                connection.client.close()
 
-        MongoDBSingleton._instances = {}
+        MongoDBSingleton._connections = {}
 
-    def test_create_instance(self):
+    def test_create_connection(self):
         """
         When creating a new instance, a connection to MongoDB should be created and ready to use.
         """
 
-        instance = MongoDBSingleton()
-        key = instance.key
+        connection = MongoDBSingleton()
+        key = connection.key
 
-        # Get instances stored in the MongoDBSingleton class
-        instances: dict = MongoDBSingleton._instances
-        keys = list(instances.keys())
+        # Get instances of connections stored in the MongoDBSingleton class
+        connections: dict = MongoDBSingleton._connections
+        keys = list(connections.keys())
 
-        msg = "The instance must belong to the MongoDBSingleton class."
-        self.assertIsInstance(instance, MongoDBSingleton, msg)
+        msg = "The connection instance must belong to the MongoDBSingleton class."
+        self.assertIsInstance(connection, MongoDBSingleton, msg)
 
-        msg = "The instance must be stored in the MongoDBSingleton class."
+        msg = "The connection instance must be stored in the MongoDBSingleton class."
         self.assertIn(key, keys, msg)
 
         msg = "The connection to MongoDB should be ready to use."
-        self.assertTrue(instance.client, msg)
+        self.assertTrue(connection.client, msg)
 
-        msg = f"The number of instances ({len(instances)}) must be equal to 1."
-        self.assertEqual(len(instances), 1, msg)
+        msg = f"The number of connections ({len(connections)}) must be equal to 1."
+        self.assertEqual(len(connections), 1, msg)
 
-    def test_close_instance(self):
+    def test_close_connection(self):
         """
-        When closing an instance, it should be removed from the MongoDBSingleton class.
+        When closing an connection instance, it should be removed from the MongoDBSingleton class.
         """
 
-        instance = MongoDBSingleton()
-        key = instance.key
+        connection = MongoDBSingleton()
+        key = connection.key
 
-        instances_before = MongoDBSingleton._instances
-        keys_before = list(instances_before.keys())
+        connections_before = MongoDBSingleton._connections
+        keys_before = list(connections_before.keys())
 
-        msg = "The instance must be stored in the MongoDBSingleton class"
+        msg = "The connection instance must be stored in the MongoDBSingleton class"
         self.assertIn(key, keys_before, msg)
 
-        MongoDBSingleton.close(key=key)
+        MongoDBSingleton.close_connection(key=key)
 
-        instances_after = MongoDBSingleton._instances
-        keys_after = list(instances_after.keys())
+        connections_after = MongoDBSingleton._connections
+        keys_after = list(connections_after.keys())
 
-        msg = "The instance must not be stored in the MongoDBSingleton class after closing"
+        msg = "The connection instance must not be stored in the MongoDBSingleton class after closing"
         self.assertNotIn(key, keys_after)
 
-        msg = f"The number of instances ({len(instances_after)}) must be equal to 0."
-        self.assertEqual(len(instances_after), 0, msg)
+        msg = f"The number of connections ({len(connections_after)}) must be equal to 0."
+        self.assertEqual(len(connections_after), 0, msg)
 
-    def test_instance_per_threads(self):
+    def test_connection_per_threads(self):
         """
-        Each thread should create a instance, and the total number of instances
+        Each thread should create a connection instance, and the total number of connections
         should match the number of threads.
         """
 
@@ -90,17 +89,17 @@ class TestMongoDBSingleton(unittest.TestCase):
 
         wait(futures)
 
-        instances: dict = MongoDBSingleton._instances
+        connections: dict = MongoDBSingleton._connections
 
-        msg = f"The number of instances ({len(instances)}) must be equal to the number of threads ({threads})"
-        self.assertEqual(len(instances), threads, msg)
+        msg = f"The number of connections ({len(connections)}) must be equal to the number of threads ({threads})"
+        self.assertEqual(len(connections), threads, msg)
 
         msg = f"The total number of operations ({operations_count}) must match the expected operations ({operations})"
         self.assertEqual(operations_count, operations, msg)
 
-    def test_close_all_instances(self):
+    def test_close_all_connections(self):
         """
-        The close_all method of MongoDBSingleton to ensure that all instances are properly closed.
+        The close_all_connections method of MongoDBSingleton to ensure that all connections are properly closed.
         """
 
         threads = 3
@@ -116,15 +115,14 @@ class TestMongoDBSingleton(unittest.TestCase):
 
         wait(futures)
 
-        instances: dict = MongoDBSingleton._instances
+        connections_before: dict = MongoDBSingleton._connections
 
-        msg = f"The number of instances ({len(instances)}) must be equal to the number of threads ({threads})"
-        self.assertEqual(len(instances), threads, msg)
+        msg = f"The number of connections ({len(connections_before)}) must be equal to the number of threads ({threads})"
+        self.assertEqual(len(connections_before), threads, msg)
 
-        MongoDBSingleton.close_all()
+        MongoDBSingleton.close_all_connections()
 
-        instances: dict = MongoDBSingleton._instances
+        connections_after: dict = MongoDBSingleton._connections
 
-        msg = f"The number of instances ({len(instances)}) must be equal to 0."
-        self.assertEqual(len(instances), 0, msg)
-
+        msg = f"The number of instances ({len(connections_after)}) must be equal to 0."
+        self.assertEqual(len(connections_after), 0, msg)
