@@ -95,3 +95,10 @@ MONGO_URI = "mongodb+srv://..."
 - **Efficient Resource Utilization:** Avoids unnecessary opening and closing of connections, optimizing resource usage.
 - **Thread and Task Specific:** Generates dedicated connections for each thread or asyncio task, preventing contention and bottlenecks.
 - **Scalable Design:** Scales effectively with multi-threaded and asyncio applications, adapting to the demands of concurrent execution.
+
+## License
+
+Copyright © 2024 [nivwer](https://github.com/nivwer).  
+This package is licensed under the [MIT License](/LICENSE).  
+
+  
