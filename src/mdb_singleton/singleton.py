@@ -29,7 +29,7 @@ class MongoDBConnection:
         MONGO_URI: str = os.getenv("MONGO_URI")
 
         try:
-            client_class = MongoClient if self.type == "thread" else AsyncIOMotorClient
+            client_class = MongoClient if self.operation == "sync" else AsyncIOMotorClient
             self.client = client_class(MONGO_URI)
 
             if settings.LOGGING_ENABLED:
@@ -85,6 +85,7 @@ class MongoDBSingleton(MongoDBConnection):
 
                 cls._connections[key].key = key
                 cls._connections[key].type = "thread"
+                cls._connections[key].operation = "sync"
 
                 cls._connections[key]._initialize_connection()
 
@@ -123,14 +124,24 @@ class MongoDBSingletonAsync(MongoDBSingleton):
         """
         Create a new MongoDBConnection instance or return an existing one based on the task key.
         """
-        key = str(id(asyncio.current_task()))
+        key = None
+        type = ""
+
+        if asyncio.get_event_loop().is_running():
+            key = str(id(asyncio.current_task()))
+            type = "task"
+
+        if key is None:
+            key = str(id(threading.current_thread()))
+            type = "thread"
 
         if key not in cls._connections:
             with cls._lock:
                 cls._connections[key] = MongoDBConnection().__new__(cls)
 
                 cls._connections[key].key = key
-                cls._connections[key].type = "task"
+                cls._connections[key].type = type
+                cls._connections[key].operation = "async"
 
                 cls._connections[key]._initialize_connection()
 
