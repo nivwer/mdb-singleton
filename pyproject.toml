@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mdb-singleton"
-version = "0.1.0"
+version = "0.1.1"
 description = "MongoDB connection management with thread-safe and asyncio-compatible singletons."
 authors = ["nivwer"]
 license = "MIT"
